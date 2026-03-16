@@ -163,7 +163,129 @@ export default function JudgingPage() {
                             className="h-16 pl-14 pr-6 rounded-[2rem] bg-card/60 backdrop-blur-xl border-border/40 text-lg font-bold shadow-xl shadow-foreground/5"
                         />
                     </div>
+                    
+                    {/* Participant List */}
+                    <div className="space-y-6">
+                        <AnimatePresence mode="popLayout">
+                            {filteredParticipants.length > 0 ? (
+                                filteredParticipants.map((participant, index) => (
+                                    <motion.div
+                                        key={participant._id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ delay: index * 0.05 }}
+                                    >
+                                        <Card className="rounded-[2rem] border-border/40 bg-card/40 backdrop-blur-xl hover:bg-card/60 transition-all overflow-hidden group">
+                                            <CardContent className="p-8">
+                                                <div className="flex flex-col gap-8">
+                                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                                        <div className="flex items-center gap-6">
+                                                            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-2xl italic">
+                                                                {participant.registrationNumber?.slice(-2) || index + 1}
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="text-2xl font-black tracking-tighter uppercase italic">
+                                                                    {participant.user?.name}
+                                                                </h3>
+                                                                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest opacity-60">
+                                                                    ID: {participant.registrationNumber} • {participant.branch}
+                                                                </p>
+                                                            </div>
+                                                        </div>
 
+                                                        <div className="flex items-center gap-3 bg-foreground/5 p-2 rounded-2xl border border-border/40">
+                                                            <div className="pl-4">
+                                                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Score</Label>
+                                                                <Input
+                                                                    type="number"
+                                                                    placeholder="00"
+                                                                    defaultValue={participant.score || ""}
+                                                                    onBlur={(e) => handleScoreChange(participant._id, e.target.value)}
+                                                                    className="h-10 w-24 bg-transparent border-none text-2xl font-black p-0 focus-visible:ring-0"
+                                                                />
+                                                            </div>
+                                                            <div className="h-10 w-10 flex items-center justify-center">
+                                                                {updatingScores[participant._id] ? (
+                                                                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                                                ) : (
+                                                                    <div className={cn(
+                                                                        "h-2 w-2 rounded-full transition-all",
+                                                                        (participant.score || 0) > 0 ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" : "bg-muted-foreground/20"
+                                                                    )} />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Submission Preview Card */}
+                                                    <div className="relative group/submission">
+                                                        {participant.submissionUrl ? (
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                <div className="aspect-video rounded-[1.5rem] bg-black/5 overflow-hidden border border-border/40 relative group-hover/submission:border-primary/20 transition-colors">
+                                                                    {participant.submissionUrl.match(/\.(jpg|jpeg|png|webp|gif)$|storage/i) ? (
+                                                                        <img 
+                                                                            src={participant.submissionUrl} 
+                                                                            alt="Submission" 
+                                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover/submission:scale-105"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                                                                            <ImageIcon className="h-12 w-12 opacity-20" />
+                                                                            <span className="text-xs font-bold uppercase tracking-widest">File Preview Restricted</span>
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/submission:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
+                                                                        <Button
+                                                                            asChild
+                                                                            variant="secondary"
+                                                                            className="rounded-xl font-bold"
+                                                                        >
+                                                                            <a href={participant.submissionUrl} target="_blank" rel="noopener noreferrer">
+                                                                                <ExternalLink className="h-4 w-4 mr-2" />
+                                                                                Full View
+                                                                            </a>
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex flex-col justify-center space-y-4">
+                                                                    <div className="space-y-1">
+                                                                        <h4 className="font-black uppercase italic tracking-tighter text-lg">Project Submission</h4>
+                                                                        <p className="text-sm text-muted-foreground font-medium italic">Uploaded on {new Date((participant as any)._creationTime).toLocaleDateString()}</p>
+                                                                    </div>
+                                                                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                                                                        <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1">Judge's Note</p>
+                                                                        <p className="text-xs font-medium text-muted-foreground leading-relaxed italic">Review the artifacts above for technical proficiency and creative execution before assigning the final score.</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="h-40 w-full rounded-[1.5rem] border-2 border-dashed border-border flex flex-col items-center justify-center gap-3 text-muted-foreground bg-black/[0.02]">
+                                                                <ImageIcon className="h-10 w-10 opacity-20" />
+                                                                <p className="text-xs font-bold uppercase tracking-widest italic opacity-40">No submission found for this entry</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </motion.div>
+                                ))
+                            ) : (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="py-20 text-center space-y-4"
+                                >
+                                    <div className="h-20 w-20 rounded-3xl bg-muted/10 flex items-center justify-center mx-auto text-muted-foreground">
+                                        <Search className="h-10 w-10" />
+                                    </div>
+                                    <h3 className="text-2xl font-black tracking-tighter uppercase italic">No participants found</h3>
+                                    <p className="text-muted-foreground font-medium italic">Adjust your search to find the competitors.</p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* Sidebar: Live Podium */}
